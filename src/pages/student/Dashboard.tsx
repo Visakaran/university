@@ -12,16 +12,18 @@ const StudentDashboard = () => {
   const { courses, assignments } = useDataContext();
   
   // Get courses the student is enrolled in
-  const enrolledCourses = courses.filter(course => student.courses.includes(course.id));
+  const enrolledCourses = courses?.filter(course => 
+    student?.courses?.includes(course.id)
+  ) || [];
   
   // Get assignments for enrolled courses
-  const courseAssignments = assignments.filter(assignment => 
-    student.courses.includes(assignment.courseId)
-  );
+  const courseAssignments = assignments?.filter(assignment => 
+    student?.courses?.includes(assignment.courseId)
+  ) || [];
 
   // Calculate attendance percentage with proper null checks
   const calculateAttendancePercentage = () => {
-    if (!student.attendanceRecords || !Array.isArray(student.attendanceRecords) || student.attendanceRecords.length === 0) {
+    if (!student?.attendanceRecords || !Array.isArray(student.attendanceRecords) || student.attendanceRecords.length === 0) {
       return 0;
     }
     
@@ -32,7 +34,7 @@ const StudentDashboard = () => {
   const attendancePercentage = calculateAttendancePercentage();
 
   const getGradeForAssignment = (assignmentId: string) => {
-    return student.grades.find(grade => grade.assignmentId === assignmentId);
+    return student?.grades?.find(grade => grade.assignmentId === assignmentId);
   };
 
   const handleCourseClick = (courseId: string) => {
@@ -43,11 +45,19 @@ const StudentDashboard = () => {
     navigate(`/student/grades/${assignmentId}`);
   };
 
+  if (!student) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-600">Loading student data...</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Student Dashboard</h1>
-        <p className="text-gray-600">Welcome back, {student.name}</p>
+        <p className="text-gray-600">Welcome back, {student.name || 'Student'}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -157,13 +167,13 @@ const StudentDashboard = () => {
             <h2 className="text-lg font-semibold text-gray-800">Recent Grades</h2>
           </div>
           <div className="px-6 py-4">
-            {student.grades.length > 0 ? (
+            {student.grades && student.grades.length > 0 ? (
               <div className="divide-y divide-gray-200">
                 {student.grades.slice(0, 5).map((grade) => {
-                  const assignment = assignments.find(a => a.id === grade.assignmentId);
+                  const assignment = assignments?.find(a => a.id === grade.assignmentId);
                   if (!assignment) return null;
                   
-                  const course = courses.find(c => c.id === assignment.courseId);
+                  const course = courses?.find(c => c.id === assignment.courseId);
                   const percentage = Math.round((grade.marks / assignment.maxMarks) * 100);
                   
                   let statusColor = 'bg-green-100 text-green-800';
