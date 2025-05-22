@@ -19,9 +19,11 @@ const StudentDashboard = () => {
     student.courses.includes(assignment.courseId)
   );
 
-  // Calculate attendance percentage
+  // Calculate attendance percentage with proper null checks
   const calculateAttendancePercentage = () => {
-    if (student.attendanceRecords.length === 0) return 0;
+    if (!student.attendanceRecords || !Array.isArray(student.attendanceRecords) || student.attendanceRecords.length === 0) {
+      return 0;
+    }
     
     const present = student.attendanceRecords.filter(record => record.present).length;
     return Math.round((present / student.attendanceRecords.length) * 100);
