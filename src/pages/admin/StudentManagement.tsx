@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Search, UserPlus, Edit, Trash2, User } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Search, UserPlus, Edit, Trash2, User, Upload } from 'lucide-react';
 import { useDataContext } from '../../context/DataContext';
 import { Student, Department } from '../../types';
 import { departments } from '../../data/mockData';
+import Papa from 'papaparse';
 
 const StudentManagement = () => {
   const { students, addStudent, updateStudent, deleteStudent } = useDataContext();
@@ -11,6 +12,7 @@ const StudentManagement = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [newStudent, setNewStudent] = useState<Partial<Student>>({
     id: '',
     name: '',
@@ -21,6 +23,43 @@ const StudentManagement = () => {
     phone: '',
     profileImage: '',
   });
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      Papa.parse(file, {
+        complete: (results) => {
+          const headers = results.data[0] as string[];
+          const rows = results.data.slice(1) as string[][];
+          
+          rows.forEach(row => {
+            if (row.length === headers.length) {
+              const studentData: Partial<Student> = {
+                id: `S${Math.floor(1000 + Math.random() * 9000)}`,
+                name: row[headers.indexOf('name')],
+                email: row[headers.indexOf('email')],
+                department: row[headers.indexOf('department')] as Department,
+                enrollmentYear: row[headers.indexOf('enrollmentYear')] || new Date().getFullYear().toString(),
+                semester: row[headers.indexOf('semester')] || '1',
+                phone: row[headers.indexOf('phone')],
+                password: 'password',
+                role: 'student',
+                courses: [],
+                attendanceRecords: [],
+                grades: [],
+              };
+              
+              if (studentData.name && studentData.email && studentData.department) {
+                addStudent(studentData as Student);
+              }
+            }
+          });
+        },
+        header: true,
+        skipEmptyLines: true
+      });
+    }
+  };
 
   const filteredStudents = students
     .filter(student => 
@@ -85,13 +124,29 @@ const StudentManagement = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Student Management</h1>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          <UserPlus className="h-5 w-5 mr-1" />
-          Add Student
-        </button>
+        <div className="flex gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept=".csv"
+            onChange={handleFileUpload}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+          >
+            <Upload className="h-5 w-5 mr-1" />
+            Import CSV
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            <UserPlus className="h-5 w-5 mr-1" />
+            Add Student
+          </button>
+        </div>
       </div>
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
