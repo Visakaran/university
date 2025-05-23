@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Search, UserPlus, Edit, Trash2, User } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Search, UserPlus, Edit, Trash2, User, Upload } from 'lucide-react';
 import { useDataContext } from '../../context/DataContext';
 import { Faculty, Department } from '../../types';
 import { departments } from '../../data/mockData';
+import Papa from 'papaparse';
 
 const FacultyManagement = () => {
   const { faculties, addFaculty, updateFaculty, deleteFaculty } = useDataContext();
@@ -11,16 +12,50 @@ const FacultyManagement = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentFaculty, setCurrentFaculty] = useState<Faculty | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [newFaculty, setNewFaculty] = useState<Partial<Faculty>>({
     id: '',
     name: '',
     email: '',
     department: departments[0],
     position: '',
-    joinDate: '',
     phone: '',
     profileImage: '',
   });
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      Papa.parse(file, {
+        complete: (results) => {
+          const headers = results.data[0] as string[];
+          const rows = results.data.slice(1) as string[][];
+          
+          rows.forEach(row => {
+            if (row.length === headers.length) {
+              const facultyData: Partial<Faculty> = {
+                id: `F${Math.floor(1000 + Math.random() * 9000)}`,
+                name: row[headers.indexOf('name')],
+                email: row[headers.indexOf('email')],
+                department: row[headers.indexOf('department')] as Department,
+                position: row[headers.indexOf('position')],
+                phone: row[headers.indexOf('phone')],
+                password: 'password',
+                role: 'faculty',
+                courses: [],
+              };
+              
+              if (facultyData.name && facultyData.email && facultyData.department) {
+                addFaculty(facultyData as Faculty);
+              }
+            }
+          });
+        },
+        header: true,
+        skipEmptyLines: true
+      });
+    }
+  };
 
   const filteredFaculties = faculties
     .filter(faculty => 
@@ -38,7 +73,6 @@ const FacultyManagement = () => {
         email: newFaculty.email,
         department: newFaculty.department as Department,
         position: newFaculty.position || 'Assistant Professor',
-        joinDate: newFaculty.joinDate || new Date().toISOString().split('T')[0],
         phone: newFaculty.phone || '',
         profileImage: newFaculty.profileImage || '',
         password: 'password',
@@ -53,7 +87,6 @@ const FacultyManagement = () => {
         email: '',
         department: departments[0],
         position: '',
-        joinDate: '',
         phone: '',
         profileImage: '',
       });
@@ -83,13 +116,29 @@ const FacultyManagement = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Faculty Management</h1>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          <UserPlus className="h-5 w-5 mr-1" />
-          Add Faculty
-        </button>
+        <div className="flex space-x-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept=".csv"
+            onChange={handleFileUpload}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+          >
+            <Upload className="h-5 w-5 mr-1" />
+            Upload CSV
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            <UserPlus className="h-5 w-5 mr-1" />
+            Add Faculty
+          </button>
+        </div>
       </div>
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
