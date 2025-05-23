@@ -1,26 +1,34 @@
 import { useState } from 'react';
-import { Search, Trash2, Book } from 'lucide-react';
+import { Search, Trash2, Book, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useDataContext } from '../../context/DataContext';
 import { Course } from '../../types';
-import { departments } from '../../data/mockData';
 
 const CourseManagement = () => {
   const { courses, deleteCourse } = useDataContext();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDepartment, setFilterDepartment] = useState<string>('All');
+  const [disabledCourses, setDisabledCourses] = useState<Set<string>>(new Set());
 
-  const filteredCourses = courses
-    .filter(course => 
-      (filterDepartment === 'All' || course.department === filterDepartment) &&
-      (course.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-       course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       course.faculty.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+  const filteredCourses = courses.filter(course => 
+    course.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    course.code.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleDeleteCourse = (id: string) => {
     if (confirm('Are you sure you want to delete this course?')) {
       deleteCourse(id);
     }
+  };
+
+  const toggleCourseStatus = (courseId: string) => {
+    setDisabledCourses(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(courseId)) {
+        newSet.delete(courseId);
+      } else {
+        newSet.add(courseId);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -32,31 +40,17 @@ const CourseManagement = () => {
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-4 border-b">
-          <div className="flex flex-col sm:flex-row justify-between space-y-3 sm:space-y-0 sm:space-x-4">
-            <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search by course name, code or faculty..."
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
             </div>
-            <div className="sm:w-64">
-              <select
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                value={filterDepartment}
-                onChange={(e) => setFilterDepartment(e.target.value)}
-              >
-                <option value="All">All Departments</option>
-                {departments.map((dept) => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
-            </div>
+            <input
+              type="text"
+              placeholder="Search by course name or ID..."
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
 
@@ -68,19 +62,7 @@ const CourseManagement = () => {
                   Course
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Code
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Department
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Credits
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Faculty
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Students
+                  Course ID
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -90,7 +72,7 @@ const CourseManagement = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredCourses.length > 0 ? (
                 filteredCourses.map((course) => (
-                  <tr key={course.id} className="hover:bg-gray-50">
+                  <tr key={course.id} className={`hover:bg-gray-50 ${disabledCourses.has(course.id) ? 'opacity-50' : ''}`}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -109,19 +91,17 @@ const CourseManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{course.code}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{course.department}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{course.credits}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{course.faculty}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{course.enrolledStudents?.length || 0}</div>
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => toggleCourseStatus(course.id)}
+                        className={`text-${disabledCourses.has(course.id) ? 'red' : 'green'}-600 hover:text-${disabledCourses.has(course.id) ? 'red' : 'green'}-900 mr-3`}
+                      >
+                        {disabledCourses.has(course.id) ? (
+                          <ToggleLeft className="h-5 w-5" />
+                        ) : (
+                          <ToggleRight className="h-5 w-5" />
+                        )}
+                      </button>
                       <button
                         onClick={() => handleDeleteCourse(course.id)}
                         className="text-red-600 hover:text-red-900"
@@ -133,7 +113,7 @@ const CourseManagement = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={3} className="px-6 py-4 text-center text-gray-500">
                     No courses found.
                   </td>
                 </tr>

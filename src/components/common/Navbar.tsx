@@ -19,19 +19,19 @@ const Navbar = () => {
           { path: '/admin/faculty', label: 'Faculty', icon: <Users className="w-5 h-5" /> },
           { path: '/admin/students', label: 'Students', icon: <Users className="w-5 h-5" /> },
           { path: '/admin/courses', label: 'Courses', icon: <Book className="w-5 h-5" /> },
+          { path: '/admin/assign-students', label: 'Assign Students', icon: <ClipboardList className="w-5 h-5" /> },
         ];
       case 'faculty':
         return [
           { path: '/faculty', label: 'Dashboard', icon: <GraduationCap className="w-5 h-5" /> },
           { path: '/faculty/courses', label: 'Courses', icon: <Book className="w-5 h-5" /> },
-          { path: '/faculty/attendance', label: 'Attendance', icon: <Calendar className="w-5 h-5" /> },
-          { path: '/faculty/assignments', label: 'Assignments', icon: <FileText className="w-5 h-5" /> },
-          { path: '/faculty/grading', label: 'Grading', icon: <ClipboardList className="w-5 h-5" /> },
           { path: '/faculty/students', label: 'Students', icon: <Users className="w-5 h-5" /> },
         ];
       case 'student':
         return [
           { path: '/student', label: 'Dashboard', icon: <GraduationCap className="w-5 h-5" /> },
+          { path: '/student/courses', label: 'Available Courses', icon: <Book className="w-5 h-5" /> },
+          { path: '/student/enrolled-courses', label: 'My Courses', icon: <ClipboardList className="w-5 h-5" /> },
         ];
       default:
         return [];
